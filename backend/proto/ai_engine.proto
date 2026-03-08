@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package ai_engine;
+
+option go_package = "github.com/contextcloud/backend/proto/ai_engine";
+
+// The AI Engine service — called by Go via gRPC
+service AIEngine {
+  // Extract entities from raw text or CSV rows
+  rpc ExtractEntities (ExtractionRequest) returns (ExtractionResponse);
+
+  // Generate vector embeddings for entity descriptions
+  rpc GenerateEmbeddings (EmbeddingRequest) returns (EmbeddingResponse);
+
+  // Infer relationships between entities
+  rpc InferRelationships (InferenceRequest) returns (InferenceResponse);
+}
+
+// ──────────────────────────────────────────
+// Entity Extraction
+// ──────────────────────────────────────────
+
+message ExtractionRequest {
+  string tenant_id = 1;
+  string source_id = 2;
+  repeated RawRecord records = 3;
+}
+
+message RawRecord {
+  string id = 1;
+  map<string, string> fields = 2;
+}
+
+message ExtractionResponse {
+  repeated ExtractedEntity entities = 1;
+}
+
+message ExtractedEntity {
+  string external_id = 1;
+  string type = 2;
+  string name = 3;
+  string description = 4;
+  map<string, string> attributes = 5;
+  float confidence_score = 6;
+  bool pii_detected = 7;
+}
+
+// ──────────────────────────────────────────
+// Embedding Generation
+// ──────────────────────────────────────────
+
+message EmbeddingRequest {
+  repeated string texts = 1;
+}
+
+message EmbeddingResponse {
+  repeated Embedding embeddings = 1;
+}
+
+message Embedding {
+  string text = 1;
+  repeated float vector = 2;  // 384-dim for sentence-transformers
+}
+
+// ──────────────────────────────────────────
+// Relationship Inference
+// ──────────────────────────────────────────
+
+message InferenceRequest {
+  repeated ExtractedEntity entities = 1;
+}
+
+message InferenceResponse {
+  repeated InferredRelationship relationships = 1;
+}
+
+message InferredRelationship {
+  string source_id = 1;
+  string target_id = 2;
+  string type = 3;
+  float confidence_score = 4;
+}
